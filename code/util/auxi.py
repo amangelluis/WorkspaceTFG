@@ -1,6 +1,6 @@
 import pandas as pd
 #import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import os
 import math
 import sklearn.preprocessing
@@ -69,3 +69,37 @@ def escalar(escala, lista):
         serie = aplicar_escalado(serie, escala)
         lista_resultante.append(serie)
     return lista_resultante
+
+def desescalar(escala, lista):
+    lista_resultante = []
+    for serie in lista:
+        # Desescalamos
+        serie = desaplicar_escalado(serie, escala)
+        lista_resultante.append(serie)
+    return lista_resultante
+
+def graficar_comparacion(serie_original, lista):
+
+    for serie in lista:
+
+        fig, ax = plt.subplots(figsize=(20, 12))
+
+        ax.plot(serie_original.index, serie_original.values, label=serie_original.name)
+        ax.plot(serie.index, serie.values, label=serie.name)
+
+        # Add a legend and labels
+        plt.legend()
+        ax.set_xlabel('Fecha')
+        ax.set_ylabel('Valor')
+        ax.set_title('Comparacion entre series')
+
+        # Rotar las etiquetas del eje x para mejor legibilidad
+        plt.xticks(rotation=45)
+
+        # Display the plot
+        plt.tight_layout()
+        plt.show()
+
+def guardar_series(ruta, lista):
+    for serie in lista:
+        serie.to_csv(ruta+serie.name)
