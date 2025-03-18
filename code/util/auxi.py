@@ -103,3 +103,18 @@ def graficar_comparacion(serie_original, lista):
 def guardar_series(ruta, lista):
     for serie in lista:
         serie.to_csv(ruta+serie.name)
+
+def train_test(lista):
+    lista_train = []
+    lista_test = []
+    for serie in lista:
+        entrenamiento_serie = serie[serie.isna() == False]
+        test_serie = serie[serie.isna()]
+        lista_train.append(entrenamiento_serie)
+        lista_test.append(test_serie)
+    return lista_train, lista_test
+
+def train_test_individual(serie):
+    entrenamiento_serie = serie[serie.isna() == False]
+    test_serie = serie[serie.isna()]
+    return entrenamiento_serie, test_serie
