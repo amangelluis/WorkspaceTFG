@@ -55,6 +55,10 @@ def aplicar_escalado(serie, escala):
         serie_escalada.iloc[i] = valores_escalados[i]
     return serie_escalada
 
+def aplicar_escalado_matrix(serie, escala):
+    valores_escalados = escala.transform(serie.values)
+    return valores_escalados
+
 def desaplicar_escalado(serie_escalada, escala):
     valores_originales = escala.inverse_transform(serie_escalada.values.reshape(-1,1))
     serie_original = serie_escalada.copy()
@@ -72,6 +76,21 @@ def escalar(lista_entrenamiento, lista_test, funcion_escala):
         # Escalamos
         serie_entrenamiento_escalada = aplicar_escalado(lista_entrenamiento[i], scaler)
         serie_test_escalada = aplicar_escalado(lista_test[i], scaler)
+        lista_entrenamiento_resultante.append(serie_entrenamiento_escalada)
+        lista_test_resultante.append(serie_test_escalada)
+        lista_scalers.append(scaler)
+    return lista_entrenamiento_resultante, lista_test_resultante, lista_scalers
+
+def escalar_matrix(lista_entrenamiento, lista_test, funcion_escala):
+    lista_entrenamiento_resultante = []
+    lista_test_resultante = []
+    lista_scalers = []
+    for i in range(0,len(lista_entrenamiento)):
+        #Entrenamos el scaler
+        scaler = funcion_escala.fit(lista_entrenamiento[i].values)
+        # Escalamos
+        serie_entrenamiento_escalada = aplicar_escalado_matrix(lista_entrenamiento[i], scaler)
+        serie_test_escalada = aplicar_escalado_matrix(lista_test[i], scaler)
         lista_entrenamiento_resultante.append(serie_entrenamiento_escalada)
         lista_test_resultante.append(serie_test_escalada)
         lista_scalers.append(scaler)
@@ -111,11 +130,6 @@ def guardar_series(ruta, lista):
     for serie in lista:
         serie.to_csv(ruta+serie.name)
 
-def train_test_individual(serie):
-    entrenamiento_serie = serie[serie.isna() == False]
-    test_serie = serie[serie.isna()]
-    return entrenamiento_serie, test_serie
-
 def train_test(lista):
     lista_train = []
     lista_imputar = []
@@ -126,9 +140,26 @@ def train_test(lista):
         lista_imputar.append(imputar_serie)
     return lista_train, lista_imputar
 
+def train_test_matrix(lista):
+    lista_train = []
+    lista_imputar = []
+    for serie in lista:
+        entrenamiento_serie = serie[serie[serie.columns[0]].isna() == False] # Los datos con los que vamos a entrenar el modelo
+        imputar_serie = serie[serie[serie.columns[0]].isna()]  # Los datos con los que vamos a usar el modelo (todos los na) para imputar
+        lista_train.append(entrenamiento_serie)
+        lista_imputar.append(imputar_serie)
+    return lista_train, lista_imputar
+
 def obtencion_datos_test_final(lista, serie_og):
     lista_test_final = []
     for serie in lista:
         test_final_serie = serie_og[serie.isna()]   # Los datos originales que vamos a tratar de replicar
+        lista_test_final.append(test_final_serie)
+    return lista_test_final
+
+def obtencion_datos_test_final_matrix(lista, serie_og):
+    lista_test_final = []
+    for serie in lista:
+        test_final_serie = serie_og[serie[serie.columns[0]].isna()]   # Los datos originales que vamos a tratar de replicar
         lista_test_final.append(test_final_serie)
     return lista_test_final
