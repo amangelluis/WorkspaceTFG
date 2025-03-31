@@ -19,31 +19,31 @@ def leer_series(ruta):
         lista_series.append(serie)
     return lista_series
 
-def RMSE(serie_original, serie_nula, serie_imputada):
+def RMSE(serie_original, serie_imputada):
     suma=0
-    for i in serie_nula[serie_nula.isna()].index:
+    for i in serie_original.index:
         suma += (serie_original[i] - serie_imputada[i])**2
     suma = math.sqrt(suma/len(serie_original))
     return suma
 
-def MAE(serie_original, serie_nula, serie_imputada):
+def MAE(serie_original, serie_imputada):
     suma=0
-    for i in serie_nula[serie_nula.isna()].index:
+    for i in serie_original.index:
         suma += abs(serie_original[i] - serie_imputada[i])
     suma = suma/len(serie_original)
     return suma
 
-def MAPE(serie_original, serie_nula, serie_imputada):
+def MAPE(serie_original, serie_imputada):
     suma=0
-    for i in serie_nula[serie_nula.isna()].index:
+    for i in serie_original.index:
         if(serie_original[i] != 0):
             suma += float(abs(serie_original[i] - serie_imputada[i]))/((serie_original[i]+serie_imputada[i])/2)
     suma = suma/len(serie_original)
     return 100*suma
 
-def BIAS(serie_original, serie_nula, serie_imputada):
+def BIAS(serie_original, serie_imputada):
     suma=0
-    for i in serie_nula[serie_nula.isna()].index:
+    for i in serie_original.index:
         suma += serie_original[i] - serie_imputada[i]
     suma = suma/len(serie_original)
     return suma
@@ -62,19 +62,26 @@ def desaplicar_escalado(serie_escalada, escala):
         serie_original.iloc[i] = valores_originales[i]
     return serie_original
 
-def escalar(escala, lista):
-    lista_resultante = []
-    for serie in lista:
+def escalar(lista_entrenamiento, lista_test, funcion_escala):
+    lista_entrenamiento_resultante = []
+    lista_test_resultante = []
+    lista_scalers = []
+    for i in range(0,len(lista_entrenamiento)):
+        #Entrenamos el scaler
+        scaler = funcion_escala.fit(lista_entrenamiento[i].values.reshape(-1,1))
         # Escalamos
-        serie = aplicar_escalado(serie, escala)
-        lista_resultante.append(serie)
-    return lista_resultante
+        serie_entrenamiento_escalada = aplicar_escalado(lista_entrenamiento[i], scaler)
+        serie_test_escalada = aplicar_escalado(lista_test[i], scaler)
+        lista_entrenamiento_resultante.append(serie_entrenamiento_escalada)
+        lista_test_resultante.append(serie_test_escalada)
+        lista_scalers.append(scaler)
+    return lista_entrenamiento_resultante, lista_test_resultante, lista_scalers
 
-def desescalar(escala, lista):
+def desescalar(lista_scalers, lista):
     lista_resultante = []
-    for serie in lista:
+    for i in range(0,len(lista)):
         # Desescalamos
-        serie = desaplicar_escalado(serie, escala)
+        serie = desaplicar_escalado(lista[i], lista_scalers[i])
         lista_resultante.append(serie)
     return lista_resultante
 
@@ -91,7 +98,7 @@ def graficar_comparacion(serie_original, lista):
         plt.legend()
         ax.set_xlabel('Fecha')
         ax.set_ylabel('Valor')
-        ax.set_title('Comparacion entre series')
+        ax.set_title('Comparacion entre '+serie_original.name+' y '+serie.name)
 
         # Rotar las etiquetas del eje x para mejor legibilidad
         plt.xticks(rotation=45)
@@ -104,17 +111,24 @@ def guardar_series(ruta, lista):
     for serie in lista:
         serie.to_csv(ruta+serie.name)
 
-def train_test(lista):
-    lista_train = []
-    lista_test = []
-    for serie in lista:
-        entrenamiento_serie = serie[serie.isna() == False]
-        test_serie = serie[serie.isna()]
-        lista_train.append(entrenamiento_serie)
-        lista_test.append(test_serie)
-    return lista_train, lista_test
-
 def train_test_individual(serie):
     entrenamiento_serie = serie[serie.isna() == False]
     test_serie = serie[serie.isna()]
     return entrenamiento_serie, test_serie
+
+def train_test(lista):
+    lista_train = []
+    lista_imputar = []
+    for serie in lista:
+        entrenamiento_serie = serie[serie.isna() == False] # Los datos con los que vamos a entrenar el modelo
+        imputar_serie = serie[serie.isna()]  # Los datos con los que vamos a usar el modelo (todos los na) para imputar
+        lista_train.append(entrenamiento_serie)
+        lista_imputar.append(imputar_serie)
+    return lista_train, lista_imputar
+
+def obtencion_datos_test_final(lista, serie_og):
+    lista_test_final = []
+    for serie in lista:
+        test_final_serie = serie_og[serie.isna()]   # Los datos originales que vamos a tratar de replicar
+        lista_test_final.append(test_final_serie)
+    return lista_test_final
