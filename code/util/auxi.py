@@ -1,12 +1,26 @@
 import pandas as pd
-#import numpy as np
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 import math
 import sklearn.preprocessing
+from sklearn.metrics import root_mean_squared_error as rmse
+from sklearn.metrics import mean_absolute_error as mae
+from sklearn.metrics import mean_absolute_percentage_error as mape
 
 def listar_datasets(ruta):
     return os.listdir(ruta)
+
+def leer_series_nombres(ruta):
+    lista_nombres = listar_datasets(ruta)
+    lista_series = []
+    for i in lista_nombres:
+        # Lo leemos
+        df = pd.read_csv(ruta+i, header=0, index_col=0, parse_dates=True)
+        serie = df.squeeze('columns')
+        serie.name = i
+        lista_series.append(serie)
+    return lista_series, lista_nombres
 
 def leer_series(ruta):
     lista_nombres = listar_datasets(ruta)
@@ -26,12 +40,18 @@ def RMSE(serie_original, serie_imputada):
     suma = math.sqrt(suma/len(serie_original))
     return suma
 
+def RMSE2(serie_original, serie_imputada):
+    return rmse(serie_original.values.reshape(-1,1), serie_imputada.loc[serie_original.index].values.reshape(-1,1))
+
 def MAE(serie_original, serie_imputada):
     suma=0
     for i in serie_original.index:
         suma += abs(serie_original[i] - serie_imputada[i])
     suma = suma/len(serie_original)
     return suma
+
+def MAE2(serie_original, serie_imputada):
+    return mae(serie_original.values.reshape(-1,1), serie_imputada.loc[serie_original.index].values.reshape(-1,1))
 
 def MAPE(serie_original, serie_imputada):
     suma=0
@@ -41,11 +61,21 @@ def MAPE(serie_original, serie_imputada):
     suma = suma/len(serie_original)
     return 100*suma
 
+def MAPE2(serie_original, serie_imputada):
+    return mape(serie_original.values.reshape(-1,1), serie_imputada.loc[serie_original.index].values.reshape(-1,1))
+
 def BIAS(serie_original, serie_imputada):
     suma=0
     for i in serie_original.index:
         suma += serie_original[i] - serie_imputada[i]
     suma = suma/len(serie_original)
+    return suma
+
+def BIAS2(Y_true, Y_pred):
+    suma=0
+    for i in range(len(Y_true)):
+        suma += Y_true[i] - Y_pred[i]
+    suma = suma/len(Y_true)
     return suma
 
 def aplicar_escalado(serie, escala):
@@ -65,6 +95,10 @@ def desaplicar_escalado(serie_escalada, escala):
     for i in range(len(serie_escalada)):
         serie_original.iloc[i] = valores_originales[i]
     return serie_original
+
+def desaplicar_escalado_matrix(serie_escalada, escala):
+    valores_originales = escala.inverse_transform(serie_escalada)
+    return valores_originales
 
 def escalar(lista_entrenamiento, lista_test, funcion_escala):
     lista_entrenamiento_resultante = []
@@ -101,6 +135,15 @@ def desescalar(lista_scalers, lista):
     for i in range(0,len(lista)):
         # Desescalamos
         serie = desaplicar_escalado(lista[i], lista_scalers[i])
+        lista_resultante.append(serie)
+    return lista_resultante
+
+def desescalar_matrix(lista_scalers, lista):
+    lista_resultante = []
+    for i in range(0,len(lista)):
+        # Desescalamos
+        serie = desaplicar_escalado_matrix(lista[i], lista_scalers[i])
+        serie = np.round(serie, decimals=1)
         lista_resultante.append(serie)
     return lista_resultante
 
