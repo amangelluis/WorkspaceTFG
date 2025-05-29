@@ -7,6 +7,7 @@ import sklearn.preprocessing
 from sklearn.metrics import root_mean_squared_error as rmse
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
+from sklearn.metrics import r2_score as r2
 
 def listar_datasets(ruta):
     return os.listdir(ruta)
@@ -77,6 +78,9 @@ def BIAS2(Y_true, Y_pred):
         suma += Y_true[i] - Y_pred[i]
     suma = suma/len(Y_true)
     return suma
+
+def R2(serie_original, serie_imputada):
+    return r2(serie_original.values.reshape(-1,1), serie_imputada.loc[serie_original.index].values.reshape(-1,1))
 
 def aplicar_escalado(serie, escala):
     valores_escalados = escala.transform(serie.values.reshape(-1,1))
