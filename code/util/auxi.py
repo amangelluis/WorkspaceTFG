@@ -151,7 +151,7 @@ def desescalar_matrix(lista_scalers, lista):
         lista_resultante.append(serie)
     return lista_resultante
 
-def graficar_comparacion(serie_original, lista):
+def graficar_comparacion(serie_original, lista,):
 
     for serie in lista:
 
@@ -165,6 +165,30 @@ def graficar_comparacion(serie_original, lista):
         ax.set_xlabel('Fecha')
         ax.set_ylabel('Valor')
         ax.set_title('Comparacion entre '+serie_original.name+' y '+serie.name)
+
+        # Rotar las etiquetas del eje x para mejor legibilidad
+        plt.xticks(rotation=45)
+
+        # Display the plot
+        plt.tight_layout()
+        plt.show()
+
+def graficar_comparacion2(serie_original, lista, lista_missing):
+
+    for i in range(len(lista)):
+
+        indices = lista_missing[i][lista_missing[i].isna()].index
+        
+        fig, ax = plt.subplots(figsize=(20, 12))
+
+        ax.plot(indices, serie_original[indices].values, label=serie_original.name)
+        ax.plot(indices, lista[i][indices].values, label=lista[i].name)
+
+        # Add a legend and labels
+        plt.legend()
+        ax.set_xlabel('Fecha')
+        ax.set_ylabel('Valor')
+        ax.set_title('Comparacion entre '+serie_original.name+' y '+lista[i].name)
 
         # Rotar las etiquetas del eje x para mejor legibilidad
         plt.xticks(rotation=45)
